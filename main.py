@@ -15,6 +15,8 @@ train_ds = tf.keras.utils.image_dataset_from_directory(
   DATASET_PATH,
   validation_split=0.2,
   subset="training",
+  shuffle=True,
+  seed=10,
   image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),
   batch_size=DEFAULT_BATCH_SIZE)
 
@@ -23,6 +25,8 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
   DATASET_PATH,
   validation_split=0.2,
   subset="validation",
+  shuffle=True,
+  seed=10,
   image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),
   batch_size=DEFAULT_BATCH_SIZE)
 
