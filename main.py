@@ -10,11 +10,23 @@ from wandb.integration.keras import WandbMetricsLogger, WandbModelCheckpoint
 
 
 DATASET_PATH = "mri/Training"
+TESTING_PATH = "mri/Testing"
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_WIDTH = 180
 DEFAULT_HEIGHT = 180
 EPOCHS = 10
 
+
+
+
+def log_augmented_images(dataset):
+    augmented_images, labels = next(iter(dataset.take(1)))
+    fig, axes = plt.subplots(1, 5, figsize=(15, 5))
+    for i in range(5):
+        axes[i].imshow(augmented_images[i].numpy().astype("uint8"))
+        axes[i].set_title(f"Label: {labels[i]}")
+        axes[i].axis("off")
+    wandb.log({"examples": fig})
 
 
 # Split training data
@@ -36,6 +48,14 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
   seed=10,
   image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),
   batch_size=DEFAULT_BATCH_SIZE)
+
+# Test dataset
+test_ds = tf.keras.utils.image_dataset_from_directory(
+    TESTING_PATH,
+    image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),  
+    batch_size=DEFAULT_BATCH_SIZE,              
+    shuffle=False                               # No shuffle for test data
+)
 
 
 wandb.init( # Wandb for logging metrics
@@ -78,7 +98,6 @@ data_augmentation = keras.Sequential(
   ]
 )
 
-
 model = models.Sequential([
 data_augmentation,
 tf.keras.layers.Rescaling(1./255), # Convert RGB channel values to 0,1
@@ -98,6 +117,7 @@ layers.Dense(128, activation='relu'),
 layers.Dense(4) # number of classes
 ])
 
+log_augmented_images(train_ds)
 model.compile(
   optimizer=tf.keras.optimizers.Adam(learning_rate=wandb.config.learning_rate),
   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -117,7 +137,12 @@ history = model.fit(
   validation_data=val_ds,
   epochs=wandb.config.epochs, 
   callbacks=[WandbMetricsLogger(), model_checkpoint],# Disable unless you have older version of tensorflow and wandb
-  ) 
+  )
+test_loss, test_accuracy = model.evaluate(test_ds)  # TEST EVALUATION
+
+wandb.log({"Test Loss": test_loss, "Test Accuracy": test_accuracy}) 
+print(f"Test Loss: {test_loss}, Test Accuracy: {test_accuracy}")
+
 model.save("finalModel.keras") # Save in SaveModel format for windB preferred format
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']

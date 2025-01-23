@@ -1,0 +1,15 @@
+{"time":"2025-01-23T20:49:06.1248082+01:00","level":"INFO","msg":"stream: starting","core version":"0.19.4","symlink path":"C:\\Users\\ahmed\\OneDrive\\Desktop\\Projects\\BrainTumorClassifier\\wandb\\run-20250123_204904-o7ufk1ru\\logs\\debug-core.log"}
+{"time":"2025-01-23T20:49:06.5546219+01:00","level":"INFO","msg":"created new stream","id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:06.5546219+01:00","level":"INFO","msg":"stream: started","id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:06.5556427+01:00","level":"INFO","msg":"writer: Do: started","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:06.5556427+01:00","level":"INFO","msg":"handler: started","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:06.5556427+01:00","level":"INFO","msg":"sender: started","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:06.9388431+01:00","level":"INFO","msg":"Starting system monitor"}
+{"time":"2025-01-23T20:49:08.6141373+01:00","level":"INFO","msg":"stream: closing","id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:08.6141373+01:00","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2025-01-23T20:49:08.6160606+01:00","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2025-01-23T20:49:09.4066455+01:00","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2025-01-23T20:49:09.6978789+01:00","level":"INFO","msg":"handler: closed","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:09.6978789+01:00","level":"INFO","msg":"sender: closed","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:09.6978789+01:00","level":"INFO","msg":"writer: Close: closed","stream_id":"o7ufk1ru"}
+{"time":"2025-01-23T20:49:09.6978789+01:00","level":"INFO","msg":"stream: closed","id":"o7ufk1ru"}
