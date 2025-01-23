@@ -4,12 +4,17 @@ from tensorflow import keras
 import os
 from PIL import Image
 import matplotlib.pyplot as plt
+import wandb
+from wandb.integration.keras import WandbMetricsLogger, WandbModelCheckpoint
 
-DATASET_PATH = "mri\Training"
+
+
+DATASET_PATH = "mri/Training"
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_WIDTH = 180
 DEFAULT_HEIGHT = 180
 EPOCHS = 10
+
 
 
 # Split training data
@@ -32,6 +37,16 @@ val_ds = tf.keras.utils.image_dataset_from_directory(
   image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),
   batch_size=DEFAULT_BATCH_SIZE)
 
+
+wandb.init( # Wandb for logging metrics
+  project="BrainTumorClassifier",
+  config={
+    "epochs": EPOCHS,
+    "batch_size": DEFAULT_BATCH_SIZE,
+    "learning_rate": 0.001,
+    "dropout_rate": 0.5
+  }
+)
 
 # def visual_image(image_path):
 #     img = Image.open(image_path)
@@ -63,6 +78,7 @@ data_augmentation = keras.Sequential(
   ]
 )
 
+
 model = models.Sequential([
 data_augmentation,
 tf.keras.layers.Rescaling(1./255), # Convert RGB channel values to 0,1
@@ -75,24 +91,34 @@ layers.MaxPooling2D((2, 2)),
 layers.Conv2D(128, (3, 3), activation='relu'),
 layers.MaxPooling2D((2, 2)),
 
-layers.Dropout(0.5),
+layers.Dropout(0.5), # Dropout to drop some of the params that can do overfitting
 
 layers.Flatten(),
 layers.Dense(128, activation='relu'),
-layers.Dense(4)
+layers.Dense(4) # number of classes
 ])
 
 model.compile(
-  optimizer='adam',
+  optimizer=tf.keras.optimizers.Adam(learning_rate=wandb.config.learning_rate),
   loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
   metrics=['accuracy'])
 
+
+os.makedirs("wandb_models", exist_ok=True)
+model_checkpoint = WandbModelCheckpoint("wandb_models/best_model.keras",
+                                        save_best_only = True,
+                                        monitor = "val_loss",
+                                        mode = "min")
+
 model.summary()
 
-history = model.fit(train_ds, validation_data=val_ds,
-  epochs=EPOCHS)
-
-
+history = model.fit(
+  train_ds,
+  validation_data=val_ds,
+  epochs=wandb.config.epochs, 
+  callbacks=[WandbMetricsLogger(), model_checkpoint],# Disable unless you have older version of tensorflow and wandb
+  ) 
+model.save("finalModel.keras") # Save in SaveModel format for windB preferred format
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
 
@@ -115,4 +141,12 @@ plt.legend(loc='upper right')
 plt.title('Training and Validation Loss')
 plt.savefig('result.png')
 
+plt.figure(figsize=(10,10))
+for image, labels in train_ds.take(1):
+  for i in range(9):
+    ax = plt.subplot(3,3, i+1)
+    plt.imshow(image[i].numpy().astype("uint8"))
+    plt.title(class_names[labels[i]])
+    plt.axis("off")
+  plt.show()
 # visual_image("C:/Users/ahmed/OneDrive/Desktop/FPT_proto/previewTestpoints.png")
