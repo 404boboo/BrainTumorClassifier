@@ -1,5 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
+from tensorflow.keras.regularizers import l2
+
 from tensorflow import keras
 import os
 from PIL import Image
@@ -54,7 +56,7 @@ test_ds = tf.keras.utils.image_dataset_from_directory(
     TESTING_PATH,
     image_size=(DEFAULT_HEIGHT, DEFAULT_WIDTH),  
     batch_size=DEFAULT_BATCH_SIZE,              
-    shuffle=False                               # No shuffle for test data
+    shuffle=False # No shuffle for test data
 )
 
 
@@ -63,7 +65,7 @@ wandb.init( # Wandb for logging metrics
   config={
     "epochs": EPOCHS,
     "batch_size": DEFAULT_BATCH_SIZE,
-    "learning_rate": 0.001,
+    "learning_rate": 0.005,
     "dropout_rate": 0.5
   }
 )
@@ -89,12 +91,10 @@ print("Classes: ", class_names)
 
 data_augmentation = keras.Sequential(
   [
-    layers.RandomFlip("horizontal",
-                      input_shape=(DEFAULT_HEIGHT,
+    layers.RandomBrightness(0.1, input_shape=(DEFAULT_HEIGHT,
                                   DEFAULT_WIDTH,
                                   3)),
-    layers.RandomRotation(0.1),
-    layers.RandomZoom(0.1),
+    layers.RandomContrast(0.1) 
   ]
 )
 
@@ -110,11 +110,12 @@ layers.MaxPooling2D((2, 2)),
 layers.Conv2D(128, (3, 3), activation='relu'),
 layers.MaxPooling2D((2, 2)),
 
-layers.Dropout(0.5), # Dropout to drop some of the params that can do overfitting
+
 
 layers.Flatten(),
 layers.Dense(128, activation='relu'),
-layers.Dense(4) # number of classes
+layers.Dropout(0.5),
+layers.Dense(num_classes)
 ])
 
 log_augmented_images(train_ds)
