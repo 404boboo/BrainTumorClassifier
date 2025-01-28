@@ -1,6 +1,7 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
 from tensorflow.keras.regularizers import l2
+from tensorflow.keras.callbacks import EarlyStopping
 
 from tensorflow import keras
 import os
@@ -16,7 +17,7 @@ TESTING_PATH = "mri/Testing"
 DEFAULT_BATCH_SIZE = 32
 DEFAULT_WIDTH = 180
 DEFAULT_HEIGHT = 180
-EPOCHS = 10
+EPOCHS = 60
 
 
 
@@ -65,8 +66,8 @@ wandb.init( # Wandb for logging metrics
   config={
     "epochs": EPOCHS,
     "batch_size": DEFAULT_BATCH_SIZE,
-    "learning_rate": 0.005,
-    "dropout_rate": 0.5
+    "learning_rate": 0.0007,
+    "dropout_rate": 0.6
   }
 )
 
@@ -91,9 +92,9 @@ print("Classes: ", class_names)
 
 data_augmentation = keras.Sequential(
   [
-    layers.RandomBrightness(0.1, input_shape=(DEFAULT_HEIGHT,
-                                  DEFAULT_WIDTH,
-                                  3)),
+    layers.RandomRotation(0.1, input_shape=(DEFAULT_HEIGHT, DEFAULT_WIDTH, 3)),
+    layers.RandomZoom(0.1),
+    layers.RandomBrightness(0.1),
     layers.RandomContrast(0.1) 
   ]
 )
@@ -101,6 +102,9 @@ data_augmentation = keras.Sequential(
 model = models.Sequential([
 data_augmentation,
 tf.keras.layers.Rescaling(1./255), # Convert RGB channel values to 0,1
+layers.Conv2D(16, (3, 3), activation='relu'),
+layers.MaxPooling2D((2, 2)),
+
 layers.Conv2D(32, (3, 3), activation='relu'),
 layers.MaxPooling2D((2,2)),
 
@@ -114,7 +118,7 @@ layers.MaxPooling2D((2, 2)),
 
 layers.Flatten(),
 layers.Dense(128, activation='relu'),
-layers.Dropout(0.5),
+layers.Dropout(wandb.config.dropout_rate),
 layers.Dense(num_classes)
 ])
 
@@ -133,6 +137,13 @@ model_checkpoint = WandbModelCheckpoint("wandb_models/best_model.keras",
 
 model.summary()
 
+
+early_stopping = EarlyStopping(
+    monitor='val_loss',
+    patience=5,  
+    restore_best_weights=True
+)
+
 history = model.fit(
   train_ds,
   validation_data=val_ds,
@@ -144,7 +155,7 @@ test_loss, test_accuracy = model.evaluate(test_ds)  # TEST EVALUATION
 wandb.log({"Test Loss": test_loss, "Test Accuracy": test_accuracy}) 
 print(f"Test Loss: {test_loss}, Test Accuracy: {test_accuracy}")
 
-model.save("finalModel.keras") # Save in SaveModel format for windB preferred format
+model.save("finalModel.keras") 
 acc = history.history['accuracy']
 val_acc = history.history['val_accuracy']
 
